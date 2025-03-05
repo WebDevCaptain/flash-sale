@@ -35,11 +35,11 @@ router.get("/", async (_req, res) => {
     // Create cache keys for each product
     const cacheKeys = productIds.map((id) => `product_${id}`);
 
-    // Use memcached.getMulti to retrieve cached product data
-    memcached.getMulti(cacheKeys, async (err, cacheResults) => {
-      if (err) {
-        console.error("Error fetching from cache:", err);
-      }
+    try {
+      const cacheResults = await memcached.getMulti(cacheKeys);
+
+      console.log("Cache results:", cacheResults);
+
       let products = [];
       let missingIds = [];
 
@@ -60,23 +60,20 @@ router.get("/", async (_req, res) => {
           `SELECT * FROM products WHERE id IN (${placeholders})`, // hacky way but works
           missingIds
         );
-        dbRows.forEach((product) => {
-          products.push(product);
-          memcached.set(
-            `product_${product.id}`,
-            product,
-            PRODUCT_CACHE_TTL,
-            (err) => {
-              if (err) {
-                console.error(`Error caching product_${product.id}:`, err);
-              }
-            }
-          );
-        });
+
+        // Highly inefficient, needs refactoring.
+        for (let i = 0; i < dbRows.length; i++) {
+          const row = dbRows[i];
+          const key = `product_${row.id}`;
+          await memcached.set(key, row, PRODUCT_CACHE_TTL);
+          products.push(row);
+        }
       }
 
       res.json({ products });
-    });
+    } catch (err) {
+      console.error("Error fetching products from getMulti method:", err);
+    }
   } catch (error) {
     console.error("Error in GET /products:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -145,16 +142,17 @@ router.post("/", async (req, res) => {
       inventory,
     };
     // Cache the newly created product
-    memcached.set(
-      `product_${newProductId}`,
-      newProduct,
-      PRODUCT_CACHE_TTL,
-      (err) => {
-        if (err) {
-          console.error(`Error caching new product ${newProductId}:`, err);
-        }
-      }
-    );
+
+    try {
+      await memcached.set(
+        `product_${newProductId}`,
+        newProduct,
+        PRODUCT_CACHE_TTL
+      );
+    } catch (err) {
+      console.error(`Error caching new product ${newProductId}:`, err);
+    }
+
     res.status(201).json({ product: newProduct });
   } catch (error) {
     console.error("Error in POST /products:", error);
@@ -179,11 +177,9 @@ router.put("/:id", async (req, res) => {
       return res.status(404).json({ error: "Product not found" });
     }
     // Invalidate the product cache to force a refresh next time
-    memcached.del(`product_${productId}`, (err) => {
-      if (err) {
-        console.error(`Error deleting cache for product ${productId}:`, err);
-      }
-    });
+
+    await memcached.del(`product_${productId}`);
+
     res.json({ message: "Product updated successfully" });
   } catch (error) {
     console.error("Error in PUT /products/:id:", error);
