@@ -1,3 +1,39 @@
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Product:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: The auto-generated id of the product.
+ *         name:
+ *           type: string
+ *           description: The product name.
+ *         description:
+ *           type: string
+ *           description: The product description.
+ *         price:
+ *           type: number
+ *           format: float
+ *           description: The product price.
+ *         inventory:
+ *           type: integer
+ *           description: The available inventory count.
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           description: The creation date of the product.
+ *       example:
+ *         id: 1
+ *         name: "Flash light"
+ *         description: "High-intensity LED flashlight"
+ *         price: 49.99
+ *         inventory: 25
+ *         created_at: "2026-01-01T00:00:00Z"
+ */
+
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
@@ -19,8 +55,23 @@ async function getProductFromDB(productId) {
 }
 
 /**
- * @api {get} /products Get all products
- * @apiDescription Retrieve a list of all products.
+ * @swagger
+ * /products:
+ *   get:
+ *     summary: Retrieve a list of all products.
+ *     description: Retrieves the list of all products by checking cache and database.
+ *     responses:
+ *       200:
+ *         description: A list of products.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Product'
  */
 router.get("/", async (_req, res) => {
   try {
@@ -288,8 +339,28 @@ router.post("/:id/purchase", async (req, res) => {
 });
 
 /**
- * @api {get} /products/:id/views Increment product view count
- * @apiDescription Increment and return the view count for a product.
+ * @swagger
+ * /products/{id}/views:
+ *   get:
+ *     summary: Increment product view count.
+ *     description: Increment and return the view count for a product.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The product id.
+ *     responses:
+ *       200:
+ *         description: Returns the current view count.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 views:
+ *                   type: integer
  */
 router.get("/:id/views", async (req, res) => {
   try {

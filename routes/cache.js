@@ -4,8 +4,14 @@ const memcached = require("../config/memcached");
 const router = express.Router();
 
 /**
- * @api {get} /cache/flush Flush Cache
- * @apiDescription Flush all cached data. (Mainly for testing & debuggging purposes)
+ * @swagger
+ * /cache/flush:
+ *   get:
+ *     summary: Flush the cache.
+ *     description: Clears all cached data in memcached.
+ *     responses:
+ *       200:
+ *         description: Cache flushed successfully.
  */
 router.get("/flush", (req, res) => {
   memcached.flush((err) => {
