@@ -5,7 +5,7 @@ const express = require("express");
 const morgan = require("morgan");
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware for logging HTTP requests
 app.use(morgan("combined"));
@@ -18,7 +18,7 @@ app.get("/", (req, res) => {
   res.send("Flash Sale Inventory API is running!");
 });
 
-// Start the API server
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+// Starting the API server
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
