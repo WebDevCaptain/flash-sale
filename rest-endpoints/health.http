@@ -4,7 +4,6 @@ GET http://localhost:3000/ HTTP/1.1
 ###
 
 # Create a new product
-# This request creates a new product with required details.
 POST http://localhost:3000/products HTTP/1.1
 Content-Type: application/json
 
@@ -24,7 +23,7 @@ GET http://localhost:3000/products HTTP/1.1
 ###
 
 # Get a product by ID
-GET http://localhost:3000/products/5 HTTP/1.1
+GET http://localhost:3000/products/8 HTTP/1.1
 
 ###
 
@@ -43,7 +42,7 @@ Content-Type: application/json
 
 # Purchase a product
 # (Decrements inventory by 1)
-POST http://localhost:3000/products/5/purchase HTTP/1.1
+POST http://localhost:3000/products/8/purchase HTTP/1.1
 
 ###
 
@@ -54,7 +53,7 @@ GET http://localhost:3000/products/5/views HTTP/1.1
 ###
 
 # Delete a product
-DELETE http://localhost:3000/products/4 HTTP/1.1
+DELETE http://localhost:3000/products/8 HTTP/1.1
 
 ###
 

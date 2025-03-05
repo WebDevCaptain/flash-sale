@@ -206,11 +206,16 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ error: "Product not found" });
     }
     // Remove the product from the cache
-    memcached.del(`product_${productId}`, (err) => {
-      if (err) {
-        console.error(`Error deleting cache for product ${productId}:`, err);
-      }
-    });
+
+    const deleted = await Promise.all([
+      memcached.del(`product_${productId}`),
+      memcached.del(`product_inventory_${productId}`),
+    ]);
+
+    if (!deleted) {
+      console.debug(`Failed to delete from cache for product ${productId}`);
+    }
+
     res.json({ message: "Product deleted successfully" });
   } catch (error) {
     console.error("Error in DELETE /products/:id:", error);
