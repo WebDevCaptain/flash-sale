@@ -226,58 +226,60 @@ router.post("/:id/purchase", async (req, res) => {
   try {
     const productId = req.params.id;
     const cacheKey = `product_inventory_${productId}`;
+    let inventory;
 
-    // Attempt to get the current inventory from the cache
-    memcached.get(cacheKey, async (err, inventory) => {
-      if (err) {
-        console.error("Cache error:", err);
-      }
-      // If inventory is not cached, load it from the database
-      if (inventory === undefined || inventory === null) {
-        const product = await getProductFromDB(productId);
-        if (!product) {
-          return res.status(404).json({ error: "Product not found" });
-        }
-        inventory = product.inventory;
-        // Cache the inventory count
-        memcached.set(cacheKey, inventory, PRODUCT_CACHE_TTL, (err) => {
-          if (err) {
-            console.error(
-              `Error caching inventory for product ${productId}:`,
-              err
-            );
-          }
-        });
-      }
+    // Tryin to get inventory from cache
+    try {
+      inventory = await memcached.get(cacheKey);
+    } catch (err) {
+      console.error("Cache error:", err);
+    }
 
-      // Check if there is enough inventory for a purchase
-      if (parseInt(inventory) <= 0) {
-        return res.status(400).json({ error: "Product out of stock" });
+    // If inventory is not cached, load it from the database
+    if (!inventory) {
+      const product = await getProductFromDB(productId);
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
       }
+      inventory = product.inventory;
+      // Cache the inventory count
+      try {
+        await memcached.set(cacheKey, inventory, PRODUCT_CACHE_TTL);
+      } catch (err) {
+        console.error(`Error caching inventory for product ${productId}:`, err);
+      }
+    }
 
-      // Use memcached atomic decrement to reduce inventory by 1
-      memcached.decr(cacheKey, 1, async (err, newInventory) => {
-        if (err) {
-          console.error("Error decrementing inventory:", err);
-          return res.status(500).json({ error: "Could not process purchase" });
-        }
-        // Update the inventory in the database asynchronously
-        await db.query("UPDATE products SET inventory = ? WHERE id = ?", [
-          newInventory,
-          productId,
-        ]);
-        // Invalidate the cached product details so the new inventory shows up next time
-        memcached.del(`product_${productId}`, (err) => {
-          if (err) {
-            console.error(
-              `Error deleting cache for product ${productId}:`,
-              err
-            );
-          }
-        });
-        res.json({ message: "Purchase successful", inventory: newInventory });
-      });
-    });
+    // Check if there is enough inventory for a purchase
+    if (parseInt(inventory) <= 0) {
+      return res
+        .status(400)
+        .json({ error: "Product out of stock, better luck next time.. :(" });
+    }
+
+    // Atomically decrement the inventory in memcached by 1
+    let newInventory;
+    try {
+      newInventory = await memcached.decr(cacheKey, 1);
+    } catch (err) {
+      console.error("Error decrementing inventory:", err);
+      return res.status(500).json({ error: "Could not process purchase" });
+    }
+
+    // Update the inventory in the database asynchronously
+    await db.query("UPDATE products SET inventory = ? WHERE id = ?", [
+      newInventory,
+      productId,
+    ]);
+
+    // Invalidate the cached product details so updated inventory is fetched next time
+    try {
+      await memcached.del(`product_${productId}`);
+    } catch (err) {
+      console.error(`Error deleting cache for product ${productId}:`, err);
+    }
+
+    res.json({ message: "Purchase successful", inventory: newInventory });
   } catch (error) {
     console.error("Error in POST /products/:id/purchase:", error);
     res.status(500).json({ error: "Internal server error" });

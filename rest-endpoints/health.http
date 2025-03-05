@@ -43,7 +43,7 @@ Content-Type: application/json
 
 # Purchase a product
 # (Decrements inventory by 1)
-POST http://localhost:3000/products/1/purchase HTTP/1.1
+POST http://localhost:3000/products/5/purchase HTTP/1.1
 
 ###
 
