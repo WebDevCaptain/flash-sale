@@ -132,8 +132,33 @@ router.get("/", async (_req, res) => {
 });
 
 /**
- * @api {get} /products/:id Get product by ID
- * @apiDescription Retrieve details of a specific product.
+ * @swagger
+ * /products/{id}:
+ *   get:
+ *     summary: Retrieve product by ID.
+ *     description: Retrieve details of a specific product by its ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The product id.
+ *     responses:
+ *       200:
+ *         description: A product object.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 product:
+ *                   $ref: '#/components/schemas/Product'
+ *                 source:
+ *                   type: string
+ *                   description: Indicates whether the data is served from cache or DB.
+ *       404:
+ *         description: Product not found.
  */
 router.get("/:id", async (req, res) => {
   try {
