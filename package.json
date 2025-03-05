@@ -4,7 +4,8 @@
   "description": "A simple API for exploring memcached and client libraries with node.js",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "docs": "jsdoc -c jsdoc.json"
   },
   "keywords": [
     "memcached"
@@ -17,5 +18,8 @@
     "memcached": "^2.2.2",
     "morgan": "^1.10.0",
     "mysql2": "^3.12.0"
+  },
+  "devDependencies": {
+    "jsdoc": "^4.0.4"
   }
 }
