@@ -1,0 +1,19 @@
+{
+  "name": "flash-sale-api",
+  "version": "1.0.0",
+  "description": "A simple API for exploring memcached and client libraries with node.js",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "keywords": [
+    "memcached"
+  ],
+  "author": "Shreyash",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "morgan": "^1.10.0"
+  }
+}
