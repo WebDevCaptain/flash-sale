@@ -92,31 +92,6 @@ router.get("/:id", async (req, res) => {
     const productId = req.params.id;
     const cacheKey = `product_${productId}`;
 
-    /*
-    async (err, result) => {
-      if (err) {
-        console.error("Cache error:", err);
-      }
-      if (result) {
-        // Return product data from cache
-        return res.json({ product: result, source: "cache" });
-      } else {
-        // If not in cache, get product from db
-        const product = await getProductFromDB(productId);
-        if (!product) {
-          return res.status(404).json({ error: "Product not found" });
-        }
-        // Cache the product data
-        memcached.set(cacheKey, product, PRODUCT_CACHE_TTL, (err) => {
-          if (err) {
-            console.error(`Error caching product ${productId}:`, err);
-          }
-        });
-        return res.json({ product, source: "db" });
-      }
-    }
-    */
-
     // Check memcached for the product
     let product = await memcached.get(cacheKey);
 
@@ -319,22 +294,14 @@ router.get("/:id/views", async (req, res) => {
     const cacheKey = `product_views_${productId}`;
 
     // Use memcached atomic increment to update view count
-    memcached.incr(cacheKey, 1, async (err, newCount) => {
-      if (err) {
-        // If the key does not exist, initialize it to 1
-        memcached.set(cacheKey, 1, PRODUCT_CACHE_TTL, (err) => {
-          if (err) {
-            console.error("Error setting view count:", err);
-            return res
-              .status(500)
-              .json({ error: "Could not update view count" });
-          }
-          return res.json({ views: 1 });
-        });
-      } else {
-        return res.json({ views: newCount });
-      }
-    });
+    const newCount = await memcached.incr(cacheKey, 1);
+
+    if (newCount) {
+      return res.json({ views: newCount });
+    } else {
+      await memcached.set(cacheKey, 1, PRODUCT_CACHE_TTL);
+      return res.json({ views: 1 });
+    }
   } catch (error) {
     console.error("Error in GET /products/:id/views:", error);
     res.status(500).json({ error: "Internal server error" });
