@@ -13,8 +13,15 @@ app.use(morgan("combined"));
 // Middleware to parse JSON request bodies
 app.use(express.json());
 
+// Configure products and cache routes
+const productsRouter = require("./routes/products");
+const cacheRouter = require("./routes/cache");
+
+app.use("/products", productsRouter);
+app.use("/cache", cacheRouter);
+
 // Simple health-check endpoint
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.send("Flash Sale Inventory API is running!");
 });
 
