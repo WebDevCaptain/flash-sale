@@ -296,8 +296,34 @@ router.delete("/:id", async (req, res) => {
 });
 
 /**
- * @api {post} /products/:id/purchase Purchase a product
- * @apiDescription Process a purchase by decrementing inventory.
+ * @swagger
+ * /products/{id}/purchase:
+ *   post:
+ *     summary: Purchase a product.
+ *     description: Process a product purchase by decrementing the inventory atomically.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The product id.
+ *     responses:
+ *       200:
+ *         description: Purchase successful, returns updated inventory.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 inventory:
+ *                   type: integer
+ *       400:
+ *         description: Product out of stock.
+ *       404:
+ *         description: Product not found.
  */
 router.post("/:id/purchase", async (req, res) => {
   try {
